@@ -1,23 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Card } from 'react-native-paper';
+import { getStudents } from '../serrvices/ApiStudents';
+import { Student } from '../models/Student';
 
 const StudentsScreen = () => {
-  // Datos ficticios basados en el esquema
-  const students = [
-    { student_id: 230195, name: "Marcos", lastname: "Pérez", grade: 90, group: "A", average: 88 },
-    { student_id: 230196, name: "María", lastname: "Gómez", grade: 85, group: "B", average: 82 },
-    { student_id: 230743, name: "Carlos", lastname: "Hernández", grade: 87, group: "A", average: 90 },
-    { student_id: 230198, name: "Ana", lastname: "Martínez", grade: 93, group: "C", average: 92 },
-    { student_id: 230199, name: "Luis", lastname: "Ramírez", grade: 89, group: "B", average: 85 },
-  ];
+  const [students, setStudents] = useState<Student[]>([]);
 
-  const renderItems = ({ item }: { item: any }) => {
+  // Función para cargar los estudiantes
+  const loadStudents = async () => {
+    try {
+      console.log("Cargando estudiantes..."); // Depuración inicial
+      const data = await getStudents();
+      console.log("Datos obtenidos:", data); // Depuración de los datos obtenidos
+      setStudents(data);
+    } catch (error) {
+      console.error("Error al cargar los estudiantes:", error); // Depuración en caso de error
+    }
+  };
+
+  // Hook useEffect para cargar los datos al montar el componente
+  useEffect(() => {
+    loadStudents();
+  }, []); // Se ejecuta una vez al montar el componente
+
+  // Renderizado de cada tarjeta
+  const renderItems = ({ item }: { item: Student }) => {
     return (
       <Card style={styles.card}>
         <Card.Content>
           <View style={styles.header}>
-            <Text style={styles.cardTitle}>{item.name} {item.lastname}</Text> {/* Nombre del estudiante */}
+            <Text style={styles.cardTitle}>
+              {item.name} {item.lastname}
+            </Text> {/* Nombre del estudiante */}
+            <Text style={styles.cardSubtitle}>
+              Matrícula: {item.student_id}
+            </Text> {/* Matrícula del estudiante */}
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoText}>Grupo:</Text>
@@ -39,11 +57,15 @@ const StudentsScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>STUDENTS SCREEN</Text>
-      <FlatList
-        data={students} // Lista de estudiantes
-        renderItem={renderItems} // Renderiza cada tarjeta
-        keyExtractor={(item) => item.student_id.toString()} // Usamos student_id como clave única
-      />
+      {students.length === 0 ? ( // Mostrar mensaje de carga si la lista está vacía
+        <Text style={styles.loadingText}>Cargando estudiantes...</Text>
+      ) : (
+        <FlatList
+          data={students} // Lista de estudiantes
+          renderItem={renderItems} // Renderiza cada tarjeta
+          keyExtractor={(item) => item.student_id.toString()} // Usamos student_id como clave única
+        />
+      )}
     </View>
   );
 };
@@ -75,6 +97,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#e50914",
   },
+  cardSubtitle: {
+    fontSize: 16,
+    color: "white",
+    marginTop: 5,
+  },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -88,6 +115,12 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: "white",
+  },
+  loadingText: {
+    fontSize: 18,
+    color: "white",
+    textAlign: "center",
+    marginTop: 20,
   },
 });
 
